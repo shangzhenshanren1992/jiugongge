@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>九宫格学习类型测评</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--primary:#4A90D9;--primary-dark:#3A7BC8;--accent:#67C23A;--bg:#f0f4f8;--card:#fff;--text:#303133;--text-light:#909399;--radius:16px;--shadow:0 4px 20px rgba(74,144,217,0.12)}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);min-height:100vh;max-width:500px;margin:0 auto;position:relative;overflow-x:hidden}
+.screen{display:none;min-height:100vh;padding:24px 20px;animation:fadeIn .4s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.welcome-card{background:var(--card);border-radius:var(--radius);padding:36px 24px;box-shadow:var(--shadow);margin-top:40px;text-align:center}
+.welcome-card h1{font-size:24px;color:var(--primary);margin-bottom:8px}
+.welcome-card .subtitle{font-size:14px;color:var(--text-light);margin-bottom:24px}
+.welcome-card .guide{font-size:14px;line-height:1.8;color:#606266;text-align:left;background:#f7f9fc;padding:16px;border-radius:12px;margin-bottom:24px}
+.input-group{margin-bottom:16px;text-align:left}
+.input-group label{font-size:14px;color:var(--text-light);display:block;margin-bottom:6px}
+.input-group input{width:100%;padding:12px 16px;border:2px solid #e4e7ed;border-radius:10px;font-size:16px;transition:border-color .3s}
+.input-group input:focus{border-color:var(--primary);outline:none}
+.btn-primary{display:block;width:100%;padding:14px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.btn-primary:active{transform:scale(.97)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+
+.q-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.progress-wrap{flex:1;margin-right:12px}
+.progress-bar{height:6px;background:#e4e7ed;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--accent));border-radius:3px;transition:width .4s ease}
+.progress-text{font-size:12px;color:var(--text-light);margin-top:4px}
+.part-badge{font-size:11px;color:var(--primary);background:#e8f1fd;padding:4px 10px;border-radius:20px;white-space:nowrap}
+.q-card{background:var(--card);border-radius:var(--radius);padding:24px 20px;box-shadow:var(--shadow)}
+.q-card .q-text{font-size:17px;line-height:1.6;margin-bottom:24px;font-weight:500}
+.options{display:flex;flex-direction:column;gap:12px}
+.option{padding:16px;border:2px solid #e4e7ed;border-radius:12px;cursor:pointer;transition:all .25s;font-size:15px;line-height:1.5;display:flex;align-items:flex-start;gap:10px}
+.option:active{transform:scale(.98)}
+.option .dot{width:22px;height:22px;border:2px solid #c0c4cc;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text-light);transition:all .25s}
+.option.selected{border-color:var(--primary);background:#f0f7ff}
+.option.selected .dot{border-color:var(--primary);background:var(--primary);color:#fff}
+.option .opt-text{flex:1}
+
+.result-card{background:var(--card);border-radius:var(--radius);padding:28px 20px;box-shadow:var(--shadow);margin-top:20px}
+.result-header{text-align:center;margin-bottom:24px}
+.result-header .child-name{font-size:20px;font-weight:700;color:var(--primary)}
+.result-header .grid-label{font-size:28px;font-weight:800;color:var(--primary);margin-top:8px;background:linear-gradient(135deg,var(--primary),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.result-header .grid-code{font-size:13px;color:var(--text-light);margin-top:4px}
+.score-section{margin-bottom:20px}
+.score-section h3{font-size:14px;color:var(--text-light);margin-bottom:10px;border-bottom:1px solid #f0f0f0;padding-bottom:6px}
+.score-bar{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.score-bar .label{width:60px;font-size:14px}
+.score-bar .track{flex:1;height:24px;background:#f5f7fa;border-radius:6px;overflow:hidden;position:relative}
+.score-bar .fill{height:100%;border-radius:6px;transition:width .8s ease}
+.score-bar .fill.v{background:#409EFF}
+.score-bar .fill.a{background:#67C23A}
+.score-bar .fill.k{background:#E6A23C}
+.score-bar .fill.d{background:#F56C6C}
+.score-bar .fill.s{background:#909399}
+.score-bar .fill.m{background:#B377D9}
+.score-bar .val{font-size:13px;width:50px;text-align:right}
+.type-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;margin:4px 0}
+.type-badge.dominant{background:#e8f1fd;color:var(--primary)}
+.type-badge.dual{background:#fdf6ec;color:#E6A23C}
+.type-badge.balanced{background:#f0f9eb;color:#67C23A}
+.type-badge.dynamic{background:#fef0f0;color:#F56C6C}
+.type-badge.static{background:#f4f4f5;color:#909399}
+.type-badge.mixed{background:#f9f0ff;color:#B377D9}
+.portrait-box{background:#f7f9fc;border-radius:12px;padding:16px;margin-top:16px}
+.portrait-box .p-label{font-size:13px;color:var(--text-light);margin-bottom:4px}
+.portrait-box .p-value{font-size:15px;font-weight:600}
+
+.report-card{background:var(--card);border-radius:var(--radius);padding:28px 20px;box-shadow:var(--shadow);margin-top:16px}
+.report-section{margin-bottom:24px;padding-bottom:24px;border-bottom:1px solid #f0f0f0}
+.report-section:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.section-icon{font-size:20px;margin-bottom:6px}
+.section-title{font-size:15px;font-weight:600;color:var(--primary);margin-bottom:10px}
+.section-body{font-size:14px;line-height:1.8;color:#606266}
+.sense-guide{background:#eef6ff;border:1px solid #bcdcff;border-radius:10px;padding:12px 14px;margin:14px 0;font-size:13.5px;line-height:1.7;color:#1d3a5f}
+.sense-guide b{color:#0b5cad;font-size:15px}
+
+.paywall-hook{background:linear-gradient(135deg,#f0f7ff,#fdf6ec);border-radius:12px;padding:20px;text-align:center;margin:24px 0}
+.hook-text{font-size:15px;color:var(--primary);font-weight:500;margin-bottom:14px;line-height:1.6}
+.btn-unlock{display:inline-block;padding:12px 32px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;border-radius:24px;font-size:15px;font-weight:600;cursor:pointer;transition:transform .2s}
+.btn-unlock:active{transform:scale(.97)}
+
+.locked-content{display:none}
+.locked-content.unlocked{display:block;animation:fadeIn .5s ease}
+
+.reminder-box{background:#f7f9fc;border-radius:12px;padding:14px 16px;margin-top:20px;font-size:13px;color:var(--text-light);line-height:1.6;text-align:center}
+.placeholder-box{background:#f7f9fc;border-radius:12px;padding:16px;margin-top:16px;font-size:13px;color:var(--text-light);line-height:1.6;text-align:center}
+.practice-section{background:#fff;border:1px solid #e4e7ed;border-radius:12px;padding:16px;margin-top:20px}
+.practice-title{font-size:15px;font-weight:700;color:var(--primary);margin-bottom:6px}
+.practice-sub{font-size:13px;font-weight:600;color:#333;margin-bottom:6px}
+.practice-tip{font-size:12.5px;color:#555;line-height:1.8;margin-bottom:8px}
+.practice-table{display:flex;flex-direction:column;border:1px solid #e4e7ed;border-radius:8px;overflow:hidden;margin:8px 0}
+.ptr-row{display:flex;padding:8px 10px;font-size:12px;border-bottom:1px solid #f0f0f0}
+.ptr-row:last-child{border-bottom:none}
+.ptr-row span{flex:1}
+.ptr-row span:first-child{font-weight:600;flex:0 0 52px}
+.ptr-row span:nth-child(2){flex:0 0 110px}
+.ptr-head{background:var(--primary);color:#fff;font-weight:600}
+.ptr-alt{background:#f9f9f9}
+
+.retake-btn{display:block;margin:16px auto 0;background:none;border:none;color:var(--text-light);font-size:13px;cursor:pointer;text-decoration:underline}
+
+.funnel-cta{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border-radius:16px;padding:24px 20px;margin:24px auto 0;max-width:420px;text-align:center;color:#fff}
+.funnel-cta h3{font-size:16px;margin:0 0 8px;color:#fff;font-weight:700}
+.funnel-cta p{font-size:13px;margin:0 0 16px;line-height:1.6;color:rgba(255,255,255,.9)}
+.funnel-cta .cta-link{display:inline-block;padding:12px 28px;background:#fff;color:#667eea;border-radius:24px;font-size:14px;font-weight:700;text-decoration:none}
+
+.loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:20px}
+.spinner{width:48px;height:48px;border:4px solid #e4e7ed;border-top-color:var(--primary);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:15px;color:var(--text-light)}
+
+.warn-box{background:#fdf6ec;border:1px solid #FAECD8;border-radius:12px;padding:16px;margin:16px 0;font-size:14px;line-height:1.6;color:#E6A23C;text-align:center}
+</style>
+</head>
+<body>
+
+<div id="screen-welcome" class="screen active">
+  <div class="welcome-card">
+    <h1>🧩 九宫格学习类型测评</h1>
+    <p class="subtitle">适用3-8岁（核心4-7岁）· 家长代答 · 2分钟 · 无需孩子参与</p>
+    <div class="guide">
+      这份问卷没有对错，也不是考试。请凭您对孩子日常表现的观察作答，选最像孩子平常状态的那一项，不要选"希望孩子成为的样子"。如果两个选项都像，选出现次数更多的那个。全部答完约需2分钟。
+    </div>
+    <div class="input-group">
+      <label>孩子昵称</label>
+      <input type="text" id="input-nickname" placeholder="如：小树" maxlength="10">
+    </div>
+    <div class="input-group">
+      <label>孩子年龄</label>
+      <input type="text" id="input-age" placeholder="如：6" maxlength="3">
+    </div>
+    <button class="btn-primary" id="btn-start" onclick="startQuiz()">开始测评</button>
+  </div>
+</div>
+
+<div id="screen-quiz" class="screen">
+  <div class="q-header">
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+      <div class="progress-text" id="progress-text">1 / 27</div>
+    </div>
+    <span class="part-badge" id="part-badge">主诉题</span>
+  </div>
+  <div class="q-card">
+    <div class="q-text" id="q-text"></div>
+    <div class="options" id="options"></div>
+  </div>
+</div>
+
+<div id="screen-loading" class="screen">
+  <div class="loading-screen">
+    <div class="spinner"></div>
+    <div class="loading-text">正在生成测评结果…</div>
+  </div>
+</div>
+
+<div id="screen-result" class="screen">
+  <div id="result-content"></div>
+</div>
+
+<div id="screen-observation" class="screen">
+  <div class="welcome-card">
+    <h1>📝 随手记</h1>
+    <p class="subtitle">观察到孩子的状态变化，扫这码随时记</p>
+    <div class="guide">这些记录平时看着零碎，复评时却是最准的校准依据。记一条只要10秒，不用长篇大论。</div>
+    <div class="input-group">
+      <label>今天日期</label>
+      <input type="text" id="obs-date" readonly>
+    </div>
+    <div class="input-group">
+      <label>孩子今天的状态（点一个最接近的）</label>
+      <div class="options" id="obs-tags">
+        <div class="option" data-tag="快档·来劲">快档·来劲</div>
+        <div class="option" data-tag="慢档·收着">慢档·收着</div>
+        <div class="option" data-tag="专注投入">专注投入</div>
+        <div class="option" data-tag="坐不住">坐不住</div>
+        <div class="option" data-tag="安静说少">安静说少</div>
+        <div class="option" data-tag="话多爱说">话多爱说</div>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>具体观察到什么（选填）</label>
+      <textarea id="obs-note" placeholder="比如：今天拼图卡住没喊人，自己试了5分钟" style="width:100%;padding:12px;border:2px solid #e4e7ed;border-radius:10px;font-size:15px;min-height:80px;font-family:inherit"></textarea>
+    </div>
+    <button class="btn-primary" onclick="saveObservation()">保存这一条</button>
+    <div id="obs-list" style="margin-top:20px"></div>
+    <button class="retake-btn" onclick="location.reload()">刷新列表</button>
+  </div>
+</div>
+
+<script>
+// ============ Question Data ============
+const questions = [
+  {id:'M1',part:'main',badge:'主诉题',
+    text:'关于孩子的日常学习状态，您眼下最想解决的是哪一个？',
+    options:[
+      {letter:'A',text:'孩子坐不住，一刻不停，注意力像跳蚤',portrait:'停不下来',card:'A2 红灯停绿灯行'},
+      {letter:'B',text:'孩子做事慢，反应慢半拍，做什么都拖拖拉拉',portrait:'慢慢来',card:'D1 听指令做事'},
+      {letter:'C',text:'孩子爱动手，手里总要摆弄东西，安静不下来',portrait:'坐不住爱动手',card:'C2 筷子夹豆'},
+      {letter:'D',text:'孩子很安静听话，但让他说点什么总是说不清',portrait:'安静说不清',card:'B1 今天的3件事'},
+      {letter:'E',text:'孩子看图很快，但读书认字老是看错、看漏',portrait:'看图快看错字',card:'E4 易混字对比'}
+    ]
+  },
+  {id:'S1',part:'sensory',badge:'感官题 1/15',text:'孩子学游泳（或学一个新的体育动作）时，更接近哪种方式？',options:[{letter:'A',text:'看完教练示范才下水',ch:'视'},{letter:'B',text:'听教练讲完动作要领才下水',ch:'听'},{letter:'C',text:'必须自己扑腾几次才明白怎么回事',ch:'体'}]},
+  {id:'S2',part:'sensory',badge:'感官题 2/15',text:'孩子学一首新儿歌，通常是怎么学会的？',options:[{letter:'A',text:'看家长唱几遍就能跟着哼',ch:'视'},{letter:'B',text:'听几遍音频后自己跟着唱',ch:'听'},{letter:'C',text:'必须边做动作边唱才能记住',ch:'体'}]},
+  {id:'S3',part:'sensory',badge:'感官题 3/15',text:'让孩子描述一个他喜欢的卡通人物，他的反应更可能是？',options:[{letter:'A',text:'能准确说出人物的外形、颜色和穿着',ch:'视'},{letter:'B',text:'能复述人物说过的台词和说话的语气',ch:'听'},{letter:'C',text:'直接模仿人物的标志性动作和表情',ch:'体'}]},
+  {id:'S4',part:'sensory',badge:'感官题 4/15',text:'亲子共读看绘本时，孩子通常的表现是？',options:[{letter:'A',text:'更喜欢听大人讲，听的时候不太看图',ch:'听'},{letter:'B',text:'喜欢用手指点着图画，或摸一摸书页的材质',ch:'体'},{letter:'C',text:'盯着图画看细节，能发现图里藏着的小东西',ch:'视'}]},
+  {id:'S5',part:'sensory',badge:'感官题 5/15',text:'一个地方带孩子去过几次后，他记路的方式更接近？',options:[{letter:'A',text:'要自己走过才记得住，坐车路过的记不住',ch:'体'},{letter:'B',text:'能记住路边的标志物，看到认识的地方就知道怎么走',ch:'视'},{letter:'C',text:'能记住大人的口头指引，比如"过了超市右转"',ch:'听'}]},
+  {id:'S6',part:'sensory',badge:'感官题 6/15',text:'幼儿园教新歌新操，孩子学得最快的方式是？',options:[{letter:'A',text:'听几遍就会哼旋律，歌词可能还记不全',ch:'听'},{letter:'B',text:'看着老师的口型和动作跟着学',ch:'视'},{letter:'C',text:'边唱边跳才能学会，坐着干唱记不住',ch:'体'}]},
+  {id:'S7',part:'sensory',badge:'感官题 7/15',text:'孩子拼乐高或积木时，通常是？',options:[{letter:'A',text:'喜欢看图纸，按步骤一步步拼',ch:'视'},{letter:'B',text:'不看图纸，自己摸索，拆了装、装了拆',ch:'体'},{letter:'C',text:'喜欢听大人在旁边一步步讲着拼',ch:'听'}]},
+  {id:'S8',part:'sensory',badge:'感官题 8/15',text:'听完一个故事后，孩子最容易记住的是？',options:[{letter:'A',text:'故事里的对话和声音，能学给谁听',ch:'听'},{letter:'B',text:'故事里画面的样子，比如"公主的裙子是粉色的"',ch:'视'},{letter:'C',text:'故事里的情节，会站起来演一遍',ch:'体'}]},
+  {id:'S9',part:'sensory',badge:'感官题 9/15',text:'带孩子逛超市或商场时，他更容易？',options:[{letter:'A',text:'忍不住伸手摸商品、拿起来翻看',ch:'体'},{letter:'B',text:'被包装好看、颜色鲜亮的商品吸引',ch:'视'},{letter:'C',text:'注意到商场里的广播、背景音乐，会问"这是什么声音"',ch:'听'}]},
+  {id:'S10',part:'sensory',badge:'感官题 10/15',text:'看演出或比赛时，孩子的注意力更多在？',options:[{letter:'A',text:'盯着舞台看，能注意到服装和动作的细节',ch:'视'},{letter:'B',text:'更关注音乐和声音，听完会跟着哼',ch:'听'},{letter:'C',text:'坐不住，身体会跟着节奏晃动',ch:'体'}]},
+  {id:'S11',part:'sensory',badge:'感官题 11/15',text:'见到一阵子没见的亲戚朋友，孩子认人的方式更接近？',options:[{letter:'A',text:'听声音认人，一开口就知道是谁',ch:'听'},{letter:'B',text:'看脸认人，记得长相但可能叫不出称呼',ch:'视'},{letter:'C',text:'靠一起做过的事记人，比如"这是带我放风筝的叔叔"',ch:'体'}]},
+  {id:'S12',part:'sensory',badge:'感官题 12/15',text:'孩子学跳绳（或类似的身体技能）时，通常是？',options:[{letter:'A',text:'直接拿起绳子试，跳几次就找到感觉',ch:'体'},{letter:'B',text:'先看别人跳，看明白了再试',ch:'视'},{letter:'C',text:'听大人喊节奏"一、二、跳"学得更快',ch:'听'}]},
+  {id:'S13',part:'sensory',badge:'感官题 13/15',text:'让孩子讲讲今天在幼儿园的事，他更常讲出的是？',options:[{letter:'A',text:'记住了老师说过的话、小朋友说过的话',ch:'听'},{letter:'B',text:'讲出玩了什么、做了什么，比如"我们玩了老狼老狼几点了"',ch:'体'},{letter:'C',text:'讲出看到了什么，比如"今天教室贴了新的画"',ch:'视'}]},
+  {id:'S14',part:'sensory',badge:'感官题 14/15',text:'玩过家家或角色扮演时，孩子最在意的是？',options:[{letter:'A',text:'道具和装扮，要把衣服穿好、道具摆好才开始',ch:'视'},{letter:'B',text:'动作和情节，跑来跑去把剧情演出来',ch:'体'},{letter:'C',text:'台词和对话，会给每个角色编词',ch:'听'}]},
+  {id:'S15',part:'sensory',badge:'感官题 15/15',text:'收拾整理玩具时，孩子的自然状态是？',options:[{letter:'A',text:'边整理边自言自语或唱歌',ch:'听'},{letter:'B',text:'按颜色、大小分类摆整齐',ch:'视'},{letter:'C',text:'整理着就变成玩，边收边搭',ch:'体'}]},
+  {id:'Q1',part:'temperament',badge:'气质题 1/10',text:'孩子放学（或从幼儿园）回到家后，通常的状态是？',options:[{letter:'A',text:'需要先安静待一会儿，才能启动做别的事',tp:'静'},{letter:'B',text:'需要先跑一跑、跳一跳，把劲儿放出来才能安静',tp:'动'},{letter:'C',text:'两种状态都有，没有固定规律',tp:'中'}]},
+  {id:'Q2',part:'temperament',badge:'气质题 2/10',text:'带孩子到一个陌生环境（新教室、新游乐场），他的第一反应是？',options:[{letter:'A',text:'马上进去探索，东看看西摸摸',tp:'动'},{letter:'B',text:'先站在旁边观察一会儿，看明白了再参与',tp:'静'},{letter:'C',text:'看当时心情，两种都有',tp:'中'}]},
+  {id:'Q3',part:'temperament',badge:'气质题 3/10',text:'做一件事情时，孩子的节奏更接近？',options:[{letter:'A',text:'先想好了再动手，想不明白宁可不动',tp:'静'},{letter:'B',text:'想到就做，做得快，边做边调整',tp:'动'},{letter:'C',text:'看事情，有时先想有时先做',tp:'中'}]},
+  {id:'Q4',part:'temperament',badge:'气质题 4/10',text:'孩子的说话方式更接近？',options:[{letter:'A',text:'话多，想到什么说什么，说比写顺溜',tp:'动'},{letter:'B',text:'话不多，想好了才开口，写出来比说出来顺溜',tp:'静'},{letter:'C',text:'看对象，熟人话多生人话少',tp:'中'}]},
+  {id:'Q5',part:'temperament',badge:'气质题 5/10',text:'在交朋友这件事上，孩子通常？',options:[{letter:'A',text:'很快就能和陌生小朋友玩到一起',tp:'动'},{letter:'B',text:'需要观察一段时间才靠近，熟了以后关系很深',tp:'静'},{letter:'C',text:'看场合，两种情形都有',tp:'中'}]},
+  {id:'Q6',part:'temperament',badge:'气质题 6/10',text:'孩子玩得正投入时被叫去吃饭，他通常的反应是？',options:[{letter:'A',text:'想把手头的事做完，叫好几遍才动，或不高兴',tp:'静'},{letter:'B',text:'放下就走，很容易被下一件事吸引',tp:'动'},{letter:'C',text:'看事情，特别喜欢的放不下，一般的放得下',tp:'中'}]},
+  {id:'Q7',part:'temperament',badge:'气质题 7/10',text:'周末或累了之后，孩子恢复精力的方式更接近？',options:[{letter:'A',text:'出去玩一圈反而更精神',tp:'动'},{letter:'B',text:'在家安静地待一天才恢复过来',tp:'静'},{letter:'C',text:'两种方式都可以',tp:'中'}]},
+  {id:'Q8',part:'temperament',badge:'气质题 8/10',text:'拿到一个新玩具或接触一个新游戏时，孩子通常？',options:[{letter:'A',text:'先研究说明书，或先看大人演示一遍',tp:'静'},{letter:'B',text:'直接上手试，边玩边研究',tp:'动'},{letter:'C',text:'看玩具类型，两种都有',tp:'中'}]},
+  {id:'Q9',part:'temperament',badge:'气质题 9/10',text:'孩子讲一件事情的时候，通常是？',options:[{letter:'A',text:'边说边比划，讲得绘声绘色',tp:'动'},{letter:'B',text:'讲得简短，问一句答一句',tp:'静'},{letter:'C',text:'看话题，感兴趣的说得多',tp:'中'}]},
+  {id:'Q10',part:'temperament',badge:'气质题 10/10',text:'做一件事遇到困难（比如拼图拼不出来）时，孩子更接近？',options:[{letter:'A',text:'自己闷头反复试，不轻易放弃',tp:'静'},{letter:'B',text:'马上喊人帮忙，或者干脆换个玩法',tp:'动'},{letter:'C',text:'看难度，有时坚持有时求助',tp:'中'}]}
+];
+
+// ============ Grid Labels (V9 corrected) ============
+const gridLabels = {
+  'V-D':'眼快脚快型','V-S':'安静观察型','V-M':'会变通的小侦探',
+  'A-D':'耳朵灵的小麻雀','A-S':'专注的小听众','A-M':'看场合的小广播',
+  'K-D':'停不下来的实干家','K-S':'慢热的小手专家','K-M':'有弹性的小能手'
+};
+
+const channelNames = {'视':'视觉型','听':'听觉型','体':'体觉型'};
+const channelCodes = {'视':'V','听':'A','体':'K'};
+const tempNames = {'动':'动态型','静':'静态型','中':'混合型'};
+const tempCodes = {'动':'D','静':'S','中':'M'};
+
+// ============ Report Modules (54 modules, V9) ============
+const reportData = {
+  'V-D': {
+    hook: '解锁完整报告，看看怎么让{昵称}把"一看就会"变成"一做就对"。',
+    p1: '你家{昵称}是"眼快脚快型"——视觉型主导，动态型气质。这类孩子的特点是眼睛快、反应快、身体也快：先看一眼就明白大概，然后马上想动手试。他学东西的最佳通道是"看"，最佳节奏是"快"。类型不是贴标签，孩子会变，建议每3个月复评一次。',
+    p2: '你可能会注意到这些画面：新玩具到手，{昵称}先翻过来掉过去看一圈，马上就拆开试；看绘本时眼睛比手快，一页没讲完他就翻页了；学新动作看一遍示范就敢上，做得对不对另说，先做了再说；写作业时窗外飞过一只鸟都能让他抬头。他不是不专心，是他的眼睛太灵，新鲜的东西一直在抢他的注意力。',
+    p3: '他最省力的是观察力：图形、颜色、空间的东西一看就记住，识字、看图、走迷宫这类任务天生省力。反应也快，课堂节奏越快他越精神，抢答、竞赛类的环节往往冲在最前面。换新环境、换新老师，他比同龄孩子更快进入状态。这几条在小学阶段都是实打实的优势。',
+    p4: '最容易卡在两个地方。一是"看会了就不练了"：他眼睛学会了，大脑就觉得完成了，但手和身体还没学会，于是出现"一看就会、一做就错"。二是持续性差：同一内容重复到第三遍他就烦了，因为动态型孩子靠新鲜感供电，重复等于断电。这不是态度问题，是他的神经系统需要变化来维持兴奋度。',
+    p5: '核心策略是"图示优先，高频变换"。教新东西先给他看图、看示范、看步骤卡，让他用眼睛先学会；然后把练习切成5到10分钟的小段，段与段之间换个形式，比如第一段看着卡片做，第二段比赛做，第三段换他考你。同一个内容换着花样出现，他就能一直保持在线。最不适合的方式是让他长时间坐着反复做同一件事。',
+    p6: '建议从主诉对应的第一张练习卡开始，每天15分钟以内，以视觉材料开场。训练时记住两条：一是每次只给一个小目标，完成了就换；二是多用"你看这个和那个有什么不一样"这类观察型提问，把他的眼睛优势用起来。按8周练习计划推进，第9周复评，看气质和通道有没有迁移。第一张练习卡的详细玩法附在报告下方「给家长的下一步」，今晚就能开始练。'
+  },
+  'V-S': {
+    hook: '解锁完整报告，看看{昵称}慢热背后的优势，以及怎么帮他更快启动。',
+    p1: '你家{昵称}是"安静观察型"——视觉型主导，静态型气质。这类孩子的特点是先看、再想、最后才做：观察很细，想清楚了才动手，一旦开始做就能做得很稳。他学东西的最佳通道是"看"，最佳节奏是"慢"。类型不是贴标签，孩子会变，建议每3个月复评一次。',
+    p2: '你可能会注意到这些画面：到了新地方，{昵称}不急着参与，先在旁边看，看明白了才加入；拼乐高喜欢照着图纸一步步来，拼错了会自己发现、拆掉重来；你催他"快点快点"，他反而更慢，甚至干脆不动；问他幼儿园的事，他可能说"没什么"，但过一会儿会突然冒出一句观察特别细的话，比如"今天小明的鞋带系错了"。他不是慢，是在用自己的节奏消化世界。',
+    p3: '他的优势首先是观察细致：别人看不到的细节他能看到，这在识字、看图、检查作业上是天然优势。准确率也高，他想清楚了再做，做的过程出错少。更难得的是坚持度，静态型孩子的能量来自内心，不需要外界不停打气，认定的事能沉住气做完。这类孩子是"慢热但长跑型"的学习者。',
+    p4: '最容易卡在两个地方。一是启动慢：新任务、新环境他需要预热，外面的人看着像"不敢""不会"，其实他的大脑在做风险评估，评估完了自然会动。二是被催促时卡死：催得急了他会僵住，因为静态型孩子的安全感来自"准备好了"，催促打乱了这个节奏，他的应对方式就是停下来。',
+    p5: '核心策略是"视觉先行，充足内化"。教新东西先给他看图谱、步骤卡、示范视频，让他自己看够了再动手；给了任务别催，说一句"你先看，看好了告诉我"比站在旁边等更有效；每次内容少一点、步子小一点，做完给他安静消化的时间，别马上接下一个任务。问他问题给他等待时间，数5秒再说"没关系，想好再说"。他最不适合被推着走，越推越慢。',
+    p6: '建议从主诉对应的第一张练习卡开始，每天10到15分钟，固定时间、固定流程，规律性对静态型孩子是安全感来源。训练时多给"看"的时间，任务卡放在他面前让他自己读。按8周练习计划推进，第9周复评。如果{昵称}在集体环境里放不开，可以在家庭练习中留意：他的安静是气质使然还是环境因素，两三周的练习记录会在复评时给出答案。练习卡详细玩法附在报告下方「给家长的下一步」。'
+  },
+  'V-M': {
+    hook: '解锁完整报告，看看怎么摸准{昵称}的状态开关，让教的方式跟得上他的节奏。',
+    p1: '你家{昵称}是"会变通的小侦探"——视觉型主导，气质上动静混合。这类孩子的特点是眼睛始终是主力，看东西学东西最快，但节奏上不固定：有时候像动态型一样风风火火，有时候像静态型一样安安静静。他学东西的最佳通道是"看"，节奏要跟着状态走。类型不是贴标签，孩子会变，建议每3个月复评一次。',
+    p2: '你可能会注意到这些画面：{昵称}看东西很灵，找东西、认路、发现图画里的细节都比大人快；但他的状态不太稳定，有时候拿到新东西马上动手，有时候要先看半天；在熟悉的环境里可能很活跃，换个场合又安静下来；同一件事，今天做得飞快，明天磨磨蹭蹭。这不是他故意反复，是混合型孩子的节奏开关由状态和兴趣控制，不由时间表控制。',
+    p3: '他的基本盘是视觉学习这条稳定的主通道：图形、颜色、空间类内容怎么学都快。难得的是有弹性——动的时候能跟上快节奏，静的时候能沉下去观察，两种模式都能用。而且自我调节空间大，不像纯动态那样离不开刺激，也不像纯静态那样必须慢，引导得当的话，他的节奏适应性是九种类型里最好的。',
+    p4: '最容易卡在两个地方。一是状态不稳定带来的误判：他今天做得快，大人就以为他"会了"，明天做得慢，又以为他"偷懒"，其实两天的是同一个他，只是状态档位不同。二是缺乏结构时随波逐流：环境热闹他就浮，环境安静他才沉。卡点不在能力，在于外界很难预判他今天的档位，教的方式和节奏对不上。',
+    p5: '核心策略是"通道固定，节奏弹性"。教新东西永远先给视觉材料，图、卡片、示范，这条不变；节奏上每天开头先花一分钟看状态：他眼睛发亮坐不住，就快节奏多变换；他安静慢热，就给足看的时间再开始。不要凭昨天推断今天。家里可以建立一个简单的"开始信号"，比如固定的开场小游戏，帮他无论哪个档位都能进入学习状态。',
+    p6: '建议从主诉对应的第一张练习卡开始，每天15分钟以内，固定用视觉材料开场，用时和节奏看当天状态微调。建议你简单记录他每天的状态档位（快/慢），两三周后你会看到他自己的规律。按8周练习计划推进，第9周复评，混合型孩子的迁移往往最早出现，复评数据最有参考价值。你的状态记录本身就是最好的校准——坚持记录两三周，规律会比一次测评更准。另外，混合型孩子最需要学会的是"识别自己当下的状态"。你可以慢慢教他问自己三个问题：我现在想安静还是想动？我做完一件事是觉得累还是没玩够？我现在需要一个人待着还是需要有人陪着？帮他从"被安排"变成"自己选"，这三个问题就是他最值钱的自我认知工具。练习卡详细玩法附在报告下方「给家长的下一步」。'
+  },
+  'A-D': {
+    hook: '解锁完整报告，看看{昵称}的耳朵天赋怎么变成学习优势。',
+    p1: '你家{昵称}是"耳朵灵的小麻雀"——听觉型主导，动态型气质。这类孩子的特点是耳朵特别灵，听一遍就会，嘴也闲不住，爱说爱问。他学东西的最佳通道是"听"，最佳节奏是"快"。类型不是贴标签，孩子会变，建议每3个月复评一次。',
+    p2: '你可能会注意到这些画面：儿歌听两遍就能哼，歌词比大人记得还牢；你说过的话他转头就学给别人听，语气都模仿得一模一样；他一天到晚嘴不停，讲故事、自言自语，有时候还爱接话、抢话；让他安安静静看书，他没几分钟就坐不住了，但放音频故事他能听很久，一边听一边还动来动去。声音就是他的学习高速公路。',
+    p3: '他的听觉记忆强，听过的东西记得牢，背课文、记单词、学英语发音这类任务天生省力。语言能力也强，敢说、会说、爱模仿语气语调，口头表达往往超过同龄人。加上动态型的反应快，他在需要"听+快速反应"的场合，比如跟读、对答、课堂互动，表现会很亮眼。',
+    p4: '最容易卡在两个地方。一是"靠听不靠看"：他听会了就不愿意看书、看字，因为看对他来说更费劲，于是出现"说得对但指不对字""会背但不认识"。二是嘴比脑子快：动态型孩子边说边想，听课时容易抢话、接话，被误解为"不守纪律"，其实这是他的思考方式，不是说错了故意捣乱。',
+    p5: '核心策略是"聆听先行，身体参与"。教新东西先让他听：听音频、听你讲、听示范，听会了再引导他看；把"看"和"听"绑在一起，比如指读时让他读出声，看图识字时先让他说出来。练习切小段，中间穿插说的环节，比如做完一题让他说说怎么做出来的。允许他出声学习：读出声、背出声、边做边讲，对他是助力不是干扰。最不适合要求他不许说话、不许动地学。',
+    p6: '建议从主诉对应的第一张练习卡开始，每天15分钟以内，用声音开场：先听一段指令或一段音频再开始任务。训练时多跟他"对话式"互动，让他说出来。按8周练习计划推进，第9周复评。他的听觉敏感度到底在什么水平，家庭练习里就能看出来：复述完不完整、听音快不快，都是信号。练习卡详细玩法附在报告下方「给家长的下一步」。'
+  },
+  'A-S': {
+    hook: '解锁完整报告，看看怎么把{昵称}听进去的东西，变成说得出来的本领。',
+    p1: '你家{昵称}是"专注的小听众"——听觉型主导，静态型气质。这类孩子的特点是安静、爱听、听得细：别人说的话、故事里的对话，他都收进去了，只是不一定马上说出来。他学东西的最佳通道是"听"，最佳节奏是"慢"。类型不是贴标签，孩子会变，建议每3个月复评一次。',
+    p2: '你可能会注意到这些画面：{昵称}听故事时能坐很久，听到有意思的地方不出声，但过几天会突然复述出一大段；大人在旁边说话，他看着像没听，其实都听见了，哪天就冒出一句你们聊过的内容；他不喜欢被叫到台前表演，被注视时会紧张、声音变小；比起说，他更愿意听，让他说说幼儿园的事，他可能只答一两个字，但你放他喜欢的音频，他能安静地循环听。',
+    p3: '他听进去的东西存得久，诗词、故事听几遍就能内化。在声音的世界里他能待很久，听故事、听音频的续航远超同龄孩子。而且感受力细腻，对语气、情绪的细微变化敏感，这种感受力是理解和表达的底子。静态型的坚持度加上听觉型的记忆，他是典型的"深藏不露型"学习者。',
+    p4: '最容易卡在两个地方。一是"输入多、输出少"：他听进去的多，说出来的少，大人容易误判为"没学会""反应慢"，其实他只是需要更长的内化时间，输出要到他准备好了才来。二是当众表现会缩：被注视时紧张，不是不会，是静态型孩子在被关注时能量消耗快，本能地想退回来。',
+    p5: '核心策略是"声音优先，深度沉浸"。教新东西用听的：讲故事、放音频、你轻声讲步骤，给他充足的听的时间；听完别马上考他，让他自己消化，输出会自己到来。用"录音回放"代替"当众表演"：让他说给录音笔听、讲给手机听，回放给他自己听，既练了输出又避开被注视的压力。问问题后等5秒，不催不抢答。他最不适合被突然点名、被推上台。',
+    p6: '建议从主诉对应的第一张练习卡开始，每天10到15分钟，固定时间，用音频或你的讲述开场。家里可以设一个"录音小电台"，让他把听到的东西讲给录音听，每周回听一次，你会直观看到他的积累。按8周练习计划推进，第9周复评。「录音小电台」每周回听一次，就是确认他听觉敏感度和语言内化水平最直接的办法。练习卡详细玩法附在报告下方「给家长的下一步」。'
+  },
+  'A-M': {
+    hook: '解锁完整报告，看看怎么让{昵称}在家在外都能打开自己。',
+    p1: '你家{昵称}是"看场合的小广播"——听觉型主导，气质上动静混合。这类孩子的特点是耳朵是主力，听东西学东西最快，但话多话少看场合：熟环境里是小广播，生环境里可能先当听众。他学东西的最佳通道是"听"，节奏要跟着场合和状态走。类型不是贴标签，孩子会变，建议每3个月复评一次。',
+    p2: '你可能会注意到这些画面：{昵称}在家可能叽叽喳喳说个不停，出门又像换了个人，安安静静只听不说；学绕口令、学顺口溜这类用耳朵的内容，他什么时候学都快；但让他做事的节奏不太好猜，有时候听完马上行动，有时候要回味一阵才动；他的活跃程度和周围的"声音环境"关系很大，有人跟他聊他就热，没人理他就安静收着。这不是两面派，是混合型孩子的开关握在环境手里。',
+    p3: '他的基本盘是听觉学习这条稳定主通道：听记、听辨、模仿发音这类能力怎么测都强。表达上也有弹性，该说的时候敢说，该听的时候能听，这种切换能力在课堂和社交里都很吃香。而且环境适应有层次，他不像纯动态型那样到哪里都先冲出去，也不像纯静态型那样一直缩着，他会先听后动，这个节奏其实很安全。',
+    p4: '最容易卡在两个地方。一是场合切换带来的误判：在家话多，大人就觉得他外向，送到集体环境发现他安静，又担心他"是不是不合群"——其实他只是需要先听熟环境。二是"听会了不等于会做了"：耳朵学会很快，但手上、纸上的输出要看他当天的状态档位，状态不对时就出现"会说不会做"。卡点不在能力，在于他的输出节奏需要先看场合再启动。而且他自己也有困惑：在家是小广播，出门变听众，连孩子自己都说不清"我到底是哪种"。这不是矛盾，是混合型孩子的开关握在环境手里，他需要更多时间来确认"在这里我该怎么做"。',
+    p5: '核心策略是"通道固定，节奏看场合"。教新东西永远先用听的，音频、讲述、对话，这条不变；到了新环境、新任务，给他一段"只听不做"的预热期，听熟了他自然会开口和动手。家里和课堂的要求别反差太大，在家鼓励他说的，在外也给他说的机会，他会慢慢把两个场合的状态打通。输出任务（说、写、做）放在他进入状态之后，别一开场就要成果。',
+    p6: '建议从主诉对应的第一张练习卡开始，每天15分钟以内，固定用声音开场，输出要求放在后半段。可以留意记录他在不同场合的状态差异，这个记录本身就是复评时最有用的参照。按8周练习计划推进，第9周复评。他在"半生不熟"场合里的真实启动方式，就藏在你记录的场合差异里，坚持记录，复评时对照即知。练习卡详细玩法附在报告下方「给家长的下一步」。'
+  },
+  'K-D': {
+    hook: '解锁完整报告，看看怎么让{昵称}坐得住——不是靠压，是靠方法。',
+    p1: '你家{昵称}是"停不下来的实干家"——体觉型主导，动态型气质。这类孩子的特点是身体就是他的学习方式：先做了再说，在动手动脚中弄明白道理，精力旺、敢尝试。他学东西的最佳通道是"身体"，最佳节奏是"快"。类型不是贴标签，孩子会变，建议每3个月复评一次。',
+    p2: '你可能会注意到这些画面：{昵称}似乎永远有使不完的劲，跑来跑去、爬上爬下，手里的东西总要拆开看看；讲故事他坐不住，但让他演故事里的角色，他马上来劲；新东西从来不看说明书，直接上手，试错了再换方法；让他坐着写作业像上刑，但搭积木、做手工、帮大人干活，他能一头扎进去。他不是不听话，是他的大脑需要身体先动起来才开工。',
+    p3: '他最显眼的是动手能力：做手工、搭建构、操作教具这类任务上手快，做中学的效率远超听中学。他也敢试不怕错，别的孩子还在想，他已经试完一轮了，这种行动力是探索精神的底子。身体记忆也好，动作技能一旦学会就很扎实。动态型的速度加体觉型的实操，他是天生的"行动派学习者"。',
+    p4: '最容易卡在两个地方。一是"被要求长时间静坐"：他的神经系统靠活动和新鲜感供电，静坐等于断电——先是小动作变多，然后走神，然后找事做，最后被批评。二是"先做了才想"：动作比思考快，容易出错、碰坏东西、被说"毛躁"，其实这是他的学习顺序，做是他的第一步，想是第二步。',
+    p5: '核心策略是"先动后静，身体贯穿"。开始学习前先让他动5分钟：跳一跳、拍拍球、做几个大动作，把劲儿放一放再坐下；学习过程能用身体就不用嘴：生字用手比划着写、算术用积木摆、节奏用身体拍；每10到15分钟给一个动的机会，站一站、换个位置都算。练习切小段、目标切小块，完成一块马上给反馈。最不适合的方式是按着不许动，越按越反弹。',
+    p6: '建议从主诉对应的第一张练习卡开始（这类孩子的主诉通常是"坐不住"），每天15分钟以内，先做身体版任务再过渡到桌面任务。记住：他的"坐得住"是练出来的，而且是先满足了"动"才练得出来。按8周练习计划推进，第9周复评。家庭练习中也能做这个区分：如果身体需求被满足后他能坐下来完成任务，多半是"气质性的动"；如果任何情况下都难以专注哪怕5分钟，建议找专业机构进一步评估——这个区分很重要。练习卡详细玩法附在报告下方「给家长的下一步」。'
+  },
+  'K-S': {
+    hook: '解锁完整报告，看看{昵称}这双巧手，怎么变成学习上的真本事。',
+    p1: '你家{昵称}是"慢热的小手专家"——体觉型主导，静态型气质。这类孩子的特点是安安静静地动手：话不多，但手很勤，喜欢摸、拆、装、做，做细活能沉很久。他学东西的最佳通道是"手和身体的触感"，最佳节奏是"慢"。类型不是贴标签，孩子会变，建议每3个月复评一次。',
+    p2: '你可能会注意到这些画面：{昵称}到一个新地方不吭声，但会悄悄伸手去摸一摸、碰一碰，用触感认识环境；做手工、捏橡皮泥、串珠子这类细活，他能一个人做很久，成品还挺精致；学新东西要先摸过、试过才有安全感，光讲给他听他不踏实；他不显山不露水，但家里什么东西放在哪、哪个玩具少了零件，他都知道。他用双手默默地研究世界。',
+    p3: '他的精细动作好，手部小肌肉的控制力强，这在写字、画画、做手工上是核心底子。耐心也足，静态型的坚持度让他能为一件手工投入很长时间，成品质量高。触觉记忆还深，摸过、做过的东西记得牢，操作类技能学一个扎实一个。这类孩子是"闷声出细活"的学习者，后劲往往超过预期。',
+    p4: '最容易卡在两个地方。一是"慢热被误读"：进入新环境、接触新内容，他要先摸熟才参与，外面看着像"不积极""胆子小"，其实是他在用触觉建立安全感，安全感到位了他比谁都稳。二是"被催就僵"：催他快一点，他的手会停下来，因为精细操作需要稳定的内在节奏，催促直接打乱这个节奏。',
+    p5: '核心策略是"动手开场，缓慢推进"。教新东西先给他可操作的材料：能摸的、能拆的、能摆的，让他用手先认识，再进入正式内容；步子小一点，一步做扎实了再走下一步，他的"扎实"会复利；给他固定的操作角，固定的时间、固定的材料，规律带来安全感；别催，说一句"你慢慢来，做好了给我看"然后真的走开，效果比盯着好得多。',
+    p6: '建议从主诉对应的第一张练习卡开始，每天10到15分钟，以可操作的材料为主，桌面任务都尽量"手可参与"。他的进步不声不响，建议每周留一件他的"作品"（做的手工、完成的任务卡），一个月回看一次，你会看到清晰的成长线。按8周练习计划推进，第9周复评。每月回看一次他的"作品"，就是观察他精细动作发展水平最直观的办法。练习卡详细玩法附在报告下方「给家长的下一步」。'
+  },
+  'K-M': {
+    hook: '解锁完整报告，看看怎么让{昵称}的状态更稳，优势更常在线。',
+    p1: '你家{昵称}是"有弹性的小能手"——体觉型主导，气质上动静混合。这类孩子的特点是手和身体是主力学习通道，做起来学得快，但动静不固定：有时候满场飞，有时候能坐下来捣鼓很久。他学东西的最佳通道是"动手操作"，节奏要跟着任务和状态走。类型不是贴标签，孩子会变，建议每3个月复评一次。',
+    p2: '你可能会注意到这些画面：{昵称}凡是能动手的事都学得快，但状态飘忽：搭积木能坐半小时，转头又满屋子跑；新东西先上手试，但试的深度看兴趣，感兴趣就钻研到底，不感兴趣摸两下就走；他的安静和闹腾之间没有明显过渡，切换得很快，常常大人还没反应过来，他已经从客厅转战到阳台了。这不是没定性，是混合型孩子的档位跟着任务的"手感"走。',
+    p3: '他的基本盘是操作学习这条稳定主通道：无论哪个档位，只要让手参与，效率就上来。弹性也大，能动能静，动手任务和安静任务都能接，适应性在实际课堂里很占便宜。而且实践出真知，他做过了就懂，经验型知识积累得快，这种"做中学"的能力是终身学习的底层能力。',
+    p4: '最容易卡在两个地方。一是"纯听讲、纯看"的场合：手一闲下来，他的注意力就开始飘，大人看到的是"不专心"，其实是他的主通道没接上。二是状态切换快带来的计划失灵：安排好的任务他随时可能切换档位，做一半跑了，不是偷懒，是任务的手感没了。',
+    p5: '核心策略是"手不闲着，节奏弹性"。什么内容都想办法让手参与：听讲时手里可以有操作材料，阅读可以指读，记忆可以边摆边记；任务切成独立小块，他切换档位时允许换到下一块，而不是要求他必须按顺序做完；每天留一段"自由操作时间"，材料给他，做什么自己定，这是他充电和沉淀的时间。观察他什么任务坐得住、什么任务坐不住，规律藏在任务类型里。每次练习前花一分钟观察他进门的状态：进门先碰东西、手不停，今天偏动态，可以先操作再讲；站住看、不急着上手，今天偏静态，先给观察和示范的时间。',
+    p6: '建议从主诉对应的第一张练习卡开始，每天15分钟以内，全部选"手可操作"的版本。建议你记录他坐得住的任务和坐不住的任务各是什么，两三周后规律自现，这个观察对复评很有价值。按8周练习计划推进，第9周复评。你记录的"坐得住和坐不住"任务清单，就是校准他通道强度最实在的依据。练习卡详细玩法附在报告下方「给家长的下一步」。'
+  }
+};
+
+// ============ State ============
+let currentIdx = 0;
+let answers = {};
+let nickname = '';
+let age = '';
+let appMode = 'assessment';
+(function(){
+  try{
+    var m = new URLSearchParams(location.search).get('mode');
+    if(m==='observation'){ appMode='observation'; }
+    else if(m==='review'){ appMode='review'; }
+  }catch(e){}
+})();
+
+// ============ Training Plan Data ============
+const startingCards = {
+  'A2': {
+    name:'红灯停绿灯行',duration:'10分钟以内',
+    activities:[
+      {title:'活动① 等一下再吃（约5分钟）',steps:['把1块小饼干或葡萄干放在孩子面前30厘米处','告诉孩子："等我数到10才能拿。如果等到了，就再奖励1块"','熟练后进阶：数到20、等1分钟、等妈妈回来']},
+      {title:'活动② 红绿灯（约5分钟）',steps:['家长说"绿灯"，孩子走或跑；说"红灯"，立即停下','进阶：红灯时加1个指令，比如"红灯！摸鼻子！"','再进阶：黄灯代表慢动作，练节奏控制']}
+    ],
+    rhythm:{D:'从"等5秒"开始，别一上来就等1分钟。能做到就大声夸："你管住了自己！"',S:'从"等3秒"开始，成功就夸。红绿灯游戏能帮身体建立"听到信号就停下"的反应。',M:'两种节奏各试3天，哪种顺用哪种，也可以按当天状态切换。'},
+    progress:'能否从等5秒进步到等30秒？红灯时能否立即停下不偷步？'
+  },
+  'D1': {
+    name:'听指令做事',duration:'15分钟以内',
+    activities:[
+      {title:'活动① 3步指令（约5分钟）',steps:['家长连说3个简单指令："去拿红色积木，放在桌上，拍2下手"','孩子听完后按顺序做','进阶：加到4步指令，或指令之间加一点干扰']},
+      {title:'活动② 复述故事（5-10分钟）',steps:['家长读一段3-4句话的短故事','孩子用自己的话复述','进阶：故事加长，或问一句"如果……会怎样"']}
+    ],
+    rhythm:{D:'先给2步指令，做到再加第3步，别一次给太多。复述时可以让他边走边说。',S:'说指令时声音大一点、拍拍他的肩再说，信号要强。复述时告诉他："妈妈等你，想好了再说。"',M:'两种节奏各试3天，哪种顺用哪种，也可以按当天状态切换。'},
+    progress:'能否从2步指令进步到3步？复述是否越来越完整？'
+  },
+  'C2': {
+    name:'筷子夹豆',duration:'15分钟以内',
+    activities:[
+      {title:'活动① 拍气球（5-10分钟）',steps:['吹1个气球，孩子用手拍，不让落地','进阶：只用左手、只用右手、拍3次必须换手','再进阶：2个气球同时拍']},
+      {title:'活动② 筷子夹豆（约5分钟）',steps:['准备1碗黄豆、1个空碗、1双筷子','孩子用筷子把豆从一个碗夹到另一个碗','计时1分钟，数数夹了多少颗','进阶：换更小的豆，或换非惯用手']}
+    ],
+    rhythm:{D:'拍气球是他的天生优势，加"拍3次换手"练控制。夹豆坐不住，就先拍5分钟气球释放动量，再坐下来夹。',S:'先用大气球，不追速度，拍到就夸。夹豆从大豆开始，1分钟夹5颗就值得庆祝。',M:'两种节奏各试3天，哪种顺用哪种，也可以按当天状态切换。'},
+    progress:'气球能否连续拍10次不落地？1分钟夹豆是否越来越多？'
+  },
+  'B1': {
+    name:'今天的3件事',duration:'10分钟以内',
+    activities:[
+      {title:'玩法（吃饭场景版，推荐）',steps:['吃饭时让孩子讲三件事：今天最开心的事、最不开心的事、最想告诉爸妈的事','家长不评价对错，只问三句："为什么开心？""不开心是怎么发生的？""下次遇到会怎么办？"']},
+      {title:'变体（早上规划版）',steps:['早上问："今天你想做的三件事是什么？"不用写下来，说出来就行','晚上睡前回顾："早上说的三件事，做了几件？感觉怎么样？"']}
+    ],
+    rhythm:{D:'他"想到就说"容易跳步，不批评，问一句"还有呢？中间有什么？"引导他自己补全。',S:'给3秒思考再回答——"不着急，想好了再说"。等他说完再问问题，不要中途打断。',M:'两种节奏各试3天，哪种顺用哪种，也可以按当天状态切换。'},
+    progress:'能否从说关键词进步到完整句子？讲事有没有顺序感（先……然后……最后）？'
+  },
+  'E4': {
+    name:'易混字对比',duration:'10-15分钟',
+    activities:[
+      {title:'活动① 易混字找不同（约5分钟）',steps:['准备3-5组形似字卡，比如：己/已/巳、人/入、大/太、未/末','让孩子指出每组哪里不一样，并说出"不一样在哪"','进阶：增加组数，或限时1分钟']},
+      {title:'活动② 文中圈字（5-10分钟）',steps:['一段短文中混入易混字，让孩子圈出所有指定的字','进阶：缩短时间，或换更隐蔽的混排']}
+    ],
+    rhythm:{D:'先让他说出"哪里不一样"再动手圈，说出来的过程能帮眼睛慢下来。',S:'先看3秒，别急着指，看清楚再行动，切忌催。',M:'两种节奏各试3天，哪种顺用哪种，也可以按当天状态切换。'},
+    progress:'辨字是否越来越快？看错率是否下降？'
+  }
+};
+const materialAdvice = {
+  V:'多用图片、卡片和手势演示，让他先"看见"再做。',
+  A:'规则用嘴说清楚，可以带上节奏和语调，让他先"听明白"再做。',
+  K:'边说边做动作示范，让他先"动手试"再讲规则。',
+  dual:'他的另一个学习感官也很强，两种方式可以换着用。',
+  balanced:'他的三个学习感官比较均衡，各种方式都可以换着用。'
+};
+const weekPlan = [
+  {week:'第1周',code:'D1',name:'听指令做事',goal:'耳朵记住+脑子记住',time:'15分钟'},
+  {week:'第2周',code:'C2',name:'筷子夹豆',goal:'手眼配合+身体协调',time:'15分钟'},
+  {week:'第3周',code:'E3',name:'看图说话',goal:'看清楚+说清楚',time:'15分钟'},
+  {week:'第4周',code:'B1',name:'今天的3件事',goal:'说话有条理',time:'10分钟'},
+  {week:'第5周',code:'A2',name:'红灯停绿灯行',goal:'等一等再行动',time:'10分钟'},
+  {week:'第6周',code:'X1',name:'节奏拍手',goal:'边做边想+动作配合',time:'15分钟'},
+  {week:'第7周',code:'X2',name:'走迷宫',goal:'看路线+动手执行',time:'15分钟'},
+  {week:'第8周',code:'X3',name:'小小任务卡',goal:'全脑总动员',time:'15分钟'}
+];
+const weekBriefs = {
+  D1:'家长连说3个简单指令（"去拿红色积木，放在桌上，拍2下手"），孩子听完按顺序做；再读一段3-4句话的短故事，让孩子用自己的话复述。进阶：4步指令、故事加长。',
+  C2:'先拍气球5到10分钟（用手拍不让落地，进阶单手拍、拍3次换手），再练筷子夹豆：把黄豆从一个碗夹到另一个碗，计时1分钟，数数夹了几颗。',
+  E3:'准备一张简单图片（公园、超市、幼儿园场景）。第一步让孩子说出"看到了什么"，关键词即可；第二步家长问"先有什么，再有什么"，帮他排序；第三步孩子用"首先……然后……最后……"完整讲一遍。',
+  B1:'吃饭时让孩子讲三件事：今天最开心的、最不开心的、最想告诉爸妈的。家长不评价对错，只问"为什么开心？""是怎么发生的？""下次会怎么办？"。',
+  A2:'玩"等一下再吃"：零食放孩子面前，数到10才能拿，等到了再奖励1块。再玩"红绿灯"：家长喊绿灯走、红灯停，进阶黄灯慢动作。',
+  X1:'放欢快的音乐，孩子自由走动或跳舞，音乐突然停，立即原地定住5秒。进阶：定住时加一个指令（"摸鼻子"）。动态型孩子从"停2秒"开始；静态型孩子可以让他自己按暂停键，体验"我控制节奏"。',
+  X2:'先让孩子用手指在迷宫图上"走一遍"（只看不动笔），再用铅笔画路线。进阶：限时；画错不能擦、要绕回。还可以用胶带在地上贴个大迷宫，用身体走。',
+  X3:'周一三五玩"小小任务卡"：家长写3个任务在便签上，孩子先看3秒，翻面凭记忆按顺序完成。周二四玩"听音画图"：家长说一段描述，孩子边听边画。周六回顾：选本周最喜欢和最难的各1个。周日自由玩：任选一张卡做1次，家长只观察不指导。'
+};
+
+// ============ Logic ============
+function fillTemplate(text) {
+  return text.replace(/\{昵称\}/g, nickname).replace(/\{年龄\}/g, age);
+}
+
+function startQuiz() {
+  const nameEl = document.getElementById('input-nickname');
+  const ageEl = document.getElementById('input-age');
+  nickname = nameEl.value.trim();
+  age = ageEl.value.trim();
+  if(!nickname){ nameEl.focus(); nameEl.style.borderColor='#F56C6C'; return; }
+  if(!age){ ageEl.focus(); ageEl.style.borderColor='#F56C6C'; return; }
+  currentIdx = 0;
+  answers = {};
+  showScreen('quiz');
+  renderQuestion();
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+  document.getElementById('screen-'+name).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function renderQuestion() {
+  var q = questions[currentIdx];
+  var total = questions.length;
+  var progress = (currentIdx / total) * 100;
+  document.getElementById('progress-fill').style.width = progress + '%';
+  document.getElementById('progress-text').textContent = (currentIdx+1) + ' / ' + total;
+  document.getElementById('part-badge').textContent = q.badge;
+  document.getElementById('q-text').textContent = q.text;
+  
+  var optsEl = document.getElementById('options');
+  optsEl.innerHTML = '';
+  q.options.forEach(function(opt) {
+    var div = document.createElement('div');
+    div.className = 'option';
+    div.innerHTML = '<div class="dot">'+opt.letter+'</div><div class="opt-text">'+opt.text+'</div>';
+    div.onclick = function() {
+      var siblings = document.querySelectorAll('.option');
+      for(var i=0;i<siblings.length;i++){siblings[i].classList.remove('selected')}
+      div.classList.add('selected');
+      setTimeout(function(){ selectOption(opt); }, 300);
+    };
+    optsEl.appendChild(div);
+  });
+}
+
+function selectOption(opt) {
+  var q = questions[currentIdx];
+  answers[q.id] = opt.letter;
+  currentIdx++;
+  if(currentIdx >= questions.length) {
+    showScreen('loading');
+    setTimeout(generateResult, 1500);
+  } else {
+    renderQuestion();
+  }
+}
+
+function calculateResult() {
+  var v=0, a=0, k=0;
+  for(var i=1;i<=15;i++){
+    var ans = answers['S'+i];
+    var q = questions.find(function(x){return x.id==='S'+i});
+    var opt = q.options.find(function(o){return o.letter===ans});
+    if(opt.ch==='视') v++;
+    else if(opt.ch==='听') a++;
+    else if(opt.ch==='体') k++;
+  }
+  
+  var dyn=0, sta=0;
+  for(var i=1;i<=10;i++){
+    var ans2 = answers['Q'+i];
+    var q2 = questions.find(function(x){return x.id==='Q'+i});
+    var opt2 = q2.options.find(function(o){return o.letter===ans2});
+    if(opt2.tp==='动') dyn+=1;
+    else if(opt2.tp==='静') sta+=1;
+    else if(opt2.tp==='中'){ dyn+=0.5; sta+=0.5; }
+  }
+  
+  var sensoryResult, sensoryLabel, sensoryBadge, sensoryCode;
+  var scores = [{n:'视',v:v},{n:'听',v:a},{n:'体',v:k}];
+  scores.sort(function(x,y){return y.v-x.v});
+  var diff = scores[0].v - scores[1].v;
+  var allDiff = scores[0].v - scores[2].v;
+  
+  if(allDiff <= 2) {
+    sensoryResult = 'balanced';
+    sensoryLabel = '均衡型（'+channelNames[scores[0].n]+'略高）';
+    sensoryBadge = 'balanced';
+    sensoryCode = channelCodes[scores[0].n];
+  } else if(diff <= 2) {
+    sensoryResult = 'dual';
+    sensoryLabel = channelNames[scores[0].n]+'·'+channelNames[scores[1].n]+' 双通道';
+    sensoryBadge = 'dual';
+    sensoryCode = channelCodes[scores[0].n];
+  } else {
+    sensoryResult = 'single';
+    sensoryLabel = channelNames[scores[0].n]+'主导';
+    sensoryBadge = 'dominant';
+    sensoryCode = channelCodes[scores[0].n];
+  }
+  
+  var tempResult, tempLabel, tempBadge, tempCode;
+  if(dyn >= 6.5) {
+    tempResult='dynamic'; tempLabel='动态型'; tempBadge='dynamic'; tempCode='D';
+  } else if(sta >= 6.5) {
+    tempResult='static'; tempLabel='静态型'; tempBadge='static'; tempCode='S';
+  } else {
+    tempResult='mixed'; tempLabel='混合型'; tempBadge='mixed'; tempCode='M';
+  }
+  
+  var gridCode = sensoryCode + '-' + tempCode;
+  var gridLabel = gridLabels[gridCode] || (channelNames[scores[0].n]+'·'+tempLabel);
+  
+  var m1Ans = answers['M1'];
+  var m1Q = questions[0];
+  var m1Opt = m1Q.options.find(function(o){return o.letter===m1Ans});
+  var portrait = m1Opt.portrait;
+  var starterCard = m1Opt.card;
+  
+  var rushFlag = false;
+  var sAnswers = [];
+  for(var i=1;i<=15;i++){sAnswers.push(answers['S'+i])}
+  if(sAnswers.every(function(x){return x===sAnswers[0]})) rushFlag = true;
+  var qAnswers = [];
+  for(var i=1;i<=10;i++){qAnswers.push(answers['Q'+i])}
+  if(qAnswers.every(function(x){return x===qAnswers[0]})) rushFlag = true;
+  
+  return {
+    v:v, a:a, k:k, dyn:dyn, sta:sta,
+    sensoryLabel:sensoryLabel, sensoryBadge:sensoryBadge, sensoryCode:sensoryCode,
+    sensoryResult:sensoryResult,
+    strongSense:channelNames[scores[0].n], weakSense:channelNames[scores[2].n],
+    strongSenseCode:channelCodes[scores[0].n], weakSenseCode:channelCodes[scores[2].n],
+    tempLabel:tempLabel, tempBadge:tempBadge, tempCode:tempCode,
+    gridCode:gridCode, gridLabel:gridLabel,
+    portrait:portrait, starterCard:starterCard,
+    rushFlag:rushFlag
+  };
+}
+
+function generateResult() {
+  var r = calculateResult();
+  if(appMode !== 'review'){
+    try{
+      localStorage.setItem('dap_first', JSON.stringify({
+        v:r.v, a:r.a, k:r.k, gridCode:r.gridCode, gridLabel:r.gridLabel,
+        strongSense:r.strongSense, weakSense:r.weakSense,
+        date:new Date().toISOString().slice(0,10)
+      }));
+    }catch(e){}
+  }
+  var rd = reportData[r.gridCode];
+  var html = '';
+  
+  // Result card: scores + portrait
+  html += '<div class="result-card">';
+  html += '<div class="result-header">';
+  html += '<div class="child-name">'+nickname+'的九宫格学习类型报告</div>';
+  html += '<div class="grid-label">'+r.gridLabel+'</div>';
+  html += '<div class="grid-code">'+r.gridCode+' · '+r.sensoryLabel.split('（')[0]+' · '+r.tempLabel+'</div>';
+  html += '</div>';
+  
+  html += '<div class="score-section">';
+  html += '<h3>感官类型评分</h3>';
+  html += '<span class="type-badge '+r.sensoryBadge+'">'+r.sensoryLabel+'</span>';
+  html += '<div style="margin-top:12px">';
+  html += scoreBar('视觉','v',r.v,15);
+  html += scoreBar('听觉','a',r.a,15);
+  html += scoreBar('体觉','k',r.k,15);
+  html += '</div></div>';
+  if(r.sensoryResult === 'balanced') {
+    html += '<div class="sense-guide">优势感官 / 弱势感官：<b>三感官均衡</b>，无明显强弱。桌牌优先玩「三感官综合」闯关。</div>';
+  } else {
+    html += '<div class="sense-guide">优势感官：<b>'+r.strongSense+'</b> ｜ 弱势感官：<b>'+r.weakSense+'</b><br>桌牌玩法建议：优先「'+r.strongSense+'×'+r.weakSense+'」交叉游戏，用强项带动弱项。</div>';
+  }
+
+  if(appMode === 'review'){
+    try{
+      var first = JSON.parse(localStorage.getItem('dap_first')||'null');
+      if(first){
+        var dv=r.v-first.v, da=r.a-first.a, dk=r.k-first.k;
+        var arrow=function(d){return d>0?('▲ +'+d):(d<0?('▼ '+d):'—');};
+        html += '<div class="sense-guide" style="background:#f0f9eb;border-color:#b8e0a8">';
+        html += '<b>对比首次测评（'+first.date+'）</b><br>';
+        html += '视觉 '+first.v+' → '+r.v+'　'+arrow(dv)+'<br>';
+        html += '听觉 '+first.a+' → '+r.a+'　'+arrow(da)+'<br>';
+        html += '体觉 '+first.k+' → '+r.k+'　'+arrow(dk)+'<br>';
+        html += '类型：'+first.gridLabel+' → '+r.gridLabel+(first.gridCode===r.gridCode?'（未变）':'（有变化 → 关注）');
+        html += '</div>';
+      } else {
+        html += '<div class="sense-guide" style="background:#fdf6ec;border-color:#FAECD8">未找到首次测评记录，无法对比。建议先用主测评码测一次，3个月后再用复评码。</div>';
+      }
+    }catch(e){}
+  }
+
+  html += '<div class="score-section">';
+  html += '<h3>气质类型评分</h3>';
+  html += '<span class="type-badge '+r.tempBadge+'">'+r.tempLabel+'</span>';
+  html += '<div style="margin-top:12px">';
+  html += scoreBar('动态','d',r.dyn,10);
+  html += scoreBar('静态','s',r.sta,10);
+  html += '</div></div>';
+  
+  html += '<div class="portrait-box">';
+  html += '<div class="p-label">家长主诉画像</div>';
+  html += '<div class="p-value">'+r.portrait+'</div>';
+  html += '<div class="p-label" style="margin-top:8px">推荐起步练习卡</div>';
+  html += '<div class="p-value">'+r.starterCard+'</div>';
+  html += '</div>';
+  
+  if(r.rushFlag) {
+    html += '<div class="warn-box">⚠️ 您的作答有一定规律，建议3个月后重新测评以获得更准确的结果。</div>';
+  }
+  html += '</div>';
+  
+  // Report card: P1-P6
+  if(rd) {
+    html += '<div class="report-card">';
+    
+    // P1 - Free
+    html += '<div class="report-section">';
+    html += '<div class="section-icon">📋</div>';
+    html += '<div class="section-title">类型判定</div>';
+    html += '<div class="section-body">'+fillTemplate(rd.p1)+'</div>';
+    html += '</div>';
+    
+    // P2 - Free
+    html += '<div class="report-section">';
+    html += '<div class="section-icon">👀</div>';
+    html += '<div class="section-title">日常表现</div>';
+    html += '<div class="section-body">'+fillTemplate(rd.p2)+'</div>';
+    html += '</div>';
+    
+    // Paid hook
+    html += '<div class="paywall-hook">';
+    html += '<p class="hook-text">'+fillTemplate(rd.hook)+'</p>';
+    html += '<button class="btn-unlock" onclick="unlockReport()">🔓 解锁完整报告</button>';
+    html += '</div>';
+    
+    // Locked content P3-P6
+    html += '<div class="locked-content" id="locked-content">';
+    
+    html += '<div class="report-section">';
+    html += '<div class="section-icon">💪</div>';
+    html += '<div class="section-title">学习优势</div>';
+    html += '<div class="section-body">'+fillTemplate(rd.p3)+'</div>';
+    html += '</div>';
+    
+    html += '<div class="report-section">';
+    html += '<div class="section-icon">⚠️</div>';
+    html += '<div class="section-title">易卡点和原因</div>';
+    html += '<div class="section-body">'+fillTemplate(rd.p4)+'</div>';
+    html += '</div>';
+    
+    html += '<div class="report-section">';
+    html += '<div class="section-icon">🎯</div>';
+    html += '<div class="section-title">适配策略</div>';
+    html += '<div class="section-body">'+fillTemplate(rd.p5)+'</div>';
+    html += '</div>';
+    
+    html += '<div class="report-section">';
+    html += '<div class="section-icon">📌</div>';
+    html += '<div class="section-title">下一步行动</div>';
+    html += '<div class="section-body">'+fillTemplate(rd.p6)+'</div>';
+    html += '</div>';
+    
+    // Practice cards & 8-week plan (dynamic)
+    var cardCode = r.starterCard.split(' ')[0];
+    var sc = startingCards[cardCode];
+    if(sc) {
+      html += '<div class="practice-section">';
+      html += '<div class="practice-title">🏠 给家长的下一步</div>';
+      // Starting card
+      html += '<div class="practice-sub" style="margin-top:4px">📍 起步练习卡：'+r.starterCard+'</div>';
+      html += '<div class="practice-tip">时长：'+sc.duration+'</div>';
+      sc.activities.forEach(function(act) {
+        html += '<div class="practice-sub" style="margin-top:10px">'+act.title+'</div>';
+        html += '<div class="practice-tip">';
+        act.steps.forEach(function(s) { html += s+'<br>'; });
+        html += '</div>';
+      });
+      html += '<div class="practice-sub" style="margin-top:10px">🎚️ 节奏建议（'+r.tempLabel+'）</div>';
+      html += '<div class="practice-tip">'+sc.rhythm[r.tempCode]+'</div>';
+      html += '<div class="practice-sub" style="margin-top:10px">📊 看进步</div>';
+      html += '<div class="practice-tip">'+sc.progress+'</div>';
+      // Material advice
+      var matKey = r.sensoryResult === 'balanced' ? 'balanced' : (r.sensoryResult === 'dual' ? 'dual' : r.sensoryCode);
+      html += '<div class="practice-sub" style="margin-top:10px">🎨 学习材料建议</div>';
+      html += '<div class="practice-tip">'+materialAdvice[matKey]+'</div>';
+      // 8-week plan
+      html += '<div class="practice-sub" style="margin-top:14px">📅 8周家庭练习计划</div>';
+      html += '<div class="practice-tip">每周练3-5次，每天不超过15分钟，按顺序来不跳周。</div>';
+      html += '<div class="practice-table">';
+      html += '<div class="ptr-row ptr-head"><span>周次</span><span>核心活动</span><span>目标</span></div>';
+      weekPlan.forEach(function(w, i) {
+        html += '<div class="ptr-row'+(i%2?' ptr-alt':'')+'"><span>'+w.week+'</span><span>'+w.code+'·'+w.name+'</span><span>'+w.goal+'</span></div>';
+      });
+      html += '</div>';
+      html += '<div class="practice-tip">每天分配：热身2分钟→核心活动10分钟→收尾3分钟（孩子说"今天我学会了___"）</div>';
+      // Weekly briefs
+      html += '<div class="practice-sub" style="margin-top:12px">📝 各周活动卡玩法</div>';
+      weekPlan.forEach(function(w) {
+        var brief = weekBriefs[w.code];
+        if(w.code === cardCode) brief = '👉 起步卡，玩法见上方「'+r.starterCard+'」';
+        html += '<div class="practice-tip"><strong>'+w.week+'（'+w.code+' '+w.name+'）</strong>：'+brief+'</div>';
+      });
+      // General tips
+      html += '<div class="practice-sub" style="margin-top:12px">📋 训练前准备</div>';
+      html += '<div class="practice-tip">1. 固定时间：选孩子精力好的时段，每天固定<br>2. 固定地点：桌面清空，只放需要的材料<br>3. 3分钟预热：拍手3次→跺脚3次→深呼吸1次</div>';
+      html += '<div class="practice-sub" style="margin-top:10px">🏃 运动前置</div>';
+      html += '<div class="practice-tip">🔴 动态型：开合跳、原地跑、高抬腿<br>🔵 静态型：温和拉伸、手臂绕圈、深呼吸</div>';
+      html += '<div class="practice-sub" style="margin-top:10px">💬 沟通四不原则</div>';
+      html += '<div class="practice-tip">❌ 不指责："需要帮忙吗？"代替"你怎么这么慢"<br>❌ 不期待：今天做不好不代表明天做不好<br>❌ 不命令："我们试试看？"代替"快去做"<br>❌ 不说教："我以前也……"代替"你应该……"</div>';
+      html += '<div class="practice-sub" style="margin-top:10px">🎯 "实物→图片→纸面"三步法</div>';
+      html += '<div class="practice-tip">不管教什么，都走三步：第1步用实物（摸、摆、操作）→ 第2步用图片（看、指、连线）→ 第3步用纸笔（写、画、算）。卡住退回上一步，觉得简单跳到下一步。</div>';
+      html += '</div>'; // practice-section
+    }
+    
+    html += '</div>'; // locked-content
+    
+    // Re-evaluation reminder
+    html += '<div class="reminder-box">📅 类型不是贴标签，孩子会变。建议每3个月复评一次，观察通道和气质的变化轨迹。</div>';
+    
+    html += '</div>'; // report-card
+  } else {
+    html += '<div class="report-card"><div class="section-body" style="text-align:center">报告模块加载中，请稍后重试。</div></div>';
+  }
+  
+  html += '<button class="retake-btn" onclick="location.reload()">重新测评</button>';
+  html += '<div class="funnel-cta"><h3>📋 了解了类型，下一步怎么用？</h3><p>28天亲子观察手账——用DAP方法记录孩子的日常，看见真实的变化轨迹。</p><a class="cta-link" href="https://neon-tulumba-4862c0.netlify.app" target="_blank">开始28天观察记录 →</a></div>';
+  
+  document.getElementById('result-content').innerHTML = html;
+  showScreen('result');
+  
+  setTimeout(function(){
+    var fills = document.querySelectorAll('.score-bar .fill');
+    for(var i=0;i<fills.length;i++){
+      fills[i].style.width = fills[i].getAttribute('data-width');
+    }
+  }, 300);
+}
+
+function unlockReport() {
+  var locked = document.getElementById('locked-content');
+  if(locked) {
+    locked.classList.add('unlocked');
+    // Scroll to unlocked content
+    setTimeout(function(){
+      locked.scrollIntoView({behavior:'smooth', block:'start'});
+    }, 100);
+    // Hide the paywall button
+    var paywall = document.querySelector('.paywall-hook');
+    if(paywall) {
+      var btn = paywall.querySelector('.btn-unlock');
+      if(btn) btn.style.display = 'none';
+      var hookText = paywall.querySelector('.hook-text');
+      if(hookText) hookText.innerHTML = '✅ 完整报告已解锁';
+    }
+  }
+}
+
+function scoreBar(label, cls, val, max) {
+  var pct = (val/max)*100;
+  return '<div class="score-bar"><div class="label">'+label+'</div><div class="track"><div class="fill '+cls+'" data-width="'+pct+'%" style="width:0%"></div></div><div class="val">'+val+'/'+max+'</div></div>';
+}
+
+// ============ Observation Mode ============
+function saveObservation(){
+  var date = document.getElementById('obs-date').value;
+  var tagEl = document.querySelector('#obs-tags .option.selected');
+  var tag = tagEl ? tagEl.getAttribute('data-tag') : '未选状态';
+  var note = document.getElementById('obs-note').value.trim();
+  var list = [];
+  try{ list = JSON.parse(localStorage.getItem('dap_obs')||'[]'); }catch(e){}
+  if(!Array.isArray(list)) list = [];
+  list.unshift({date:date, tag:tag, note:note, ts:Date.now()});
+  try{ localStorage.setItem('dap_obs', JSON.stringify(list)); }catch(e){}
+  document.getElementById('obs-note').value='';
+  document.querySelectorAll('#obs-tags .option').forEach(function(x){x.classList.remove('selected')});
+  renderObservationList();
+}
+function renderObservationList(){
+  var el = document.getElementById('obs-list');
+  if(!el) return;
+  var list = [];
+  try{ list = JSON.parse(localStorage.getItem('dap_obs')||'[]'); }catch(e){}
+  if(!Array.isArray(list) || !list.length){
+    el.innerHTML = '<div class="placeholder-box">还没有记录。扫这码，第一次观察到就记一条，积少成多。</div>';
+    return;
+  }
+  var h = '<h3 style="font-size:14px;margin-bottom:10px;color:#606266">已记录 '+list.length+' 条</h3>';
+  list.slice(0,20).forEach(function(o,i){
+    h += '<div style="background:#fff;border:1px solid #e4e7ed;border-radius:10px;padding:10px;margin-bottom:8px;font-size:13px">';
+    h += '<div style="color:#909399;font-size:12px">'+o.date+' · '+o.tag+'</div>';
+    if(o.note) h += '<div style="margin-top:4px;color:#303133;line-height:1.6">'+o.note+'</div>';
+    h += '<div style="margin-top:6px"><a href="javascript:void(0)" onclick="delObservation('+i+')" style="color:#F56C6C;font-size:12px">删除这条</a></div>';
+    h += '</div>';
+  });
+  el.innerHTML = h;
+}
+function delObservation(i){
+  var list = [];
+  try{ list = JSON.parse(localStorage.getItem('dap_obs')||'[]'); }catch(e){}
+  if(Array.isArray(list) && list[i]){
+    list.splice(i,1);
+    try{ localStorage.setItem('dap_obs', JSON.stringify(list)); }catch(e){}
+    renderObservationList();
+  }
+}
+document.querySelectorAll('#obs-tags .option').forEach(function(o){
+  o.onclick = function(){
+    document.querySelectorAll('#obs-tags .option').forEach(function(x){x.classList.remove('selected')});
+    o.classList.add('selected');
+  };
+});
+
+// ============ Mode Init ============
+if(appMode === 'observation'){
+  var dEl = document.getElementById('obs-date');
+  if(dEl) dEl.value = new Date().toISOString().slice(0,10);
+  renderObservationList();
+  showScreen('observation');
+} else if(appMode === 'review'){
+  var btn = document.getElementById('btn-start');
+  if(btn) btn.textContent = '开始复评';
+  var sub = document.querySelector('#screen-welcome .subtitle');
+  if(sub) sub.textContent = '复评模式 · 重做一遍，看孩子这3个月的变化轨迹';
+}
+</script>
+</body>
+</html>
